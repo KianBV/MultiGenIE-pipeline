@@ -171,7 +171,7 @@ ensurePathExists(path_gpickle)
 nx.write_edgelist(G, path_edgelist)
 print("Exported the .edgelist")
 
-path_graphml = 'C:/Users/Kian/Desktop/Kian_Praksa/IGC/databases/results/{db}/Gephi/02_DGE_global_network_TPM_cutoff_{tpm}.graphml'.format(db = database, tpm = TPM_cutoff)
+path_graphml = 'C:/Users/Kian/Desktop/Kian_Praksa/IGC/databases/results/{db}/Gephi/Graph/02_DGE_global_network_TPM_cutoff_{tpm}.graphml'.format(db = database, tpm = TPM_cutoff)
 ensurePathExists(path_graphml)
 nx.write_graphml(G, path_graphml)
 print("Exported the .graphml")

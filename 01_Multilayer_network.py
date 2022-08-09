@@ -163,7 +163,7 @@ print("Done, runtime : {:}".format(end-start))
 
 
 
-#Create a dictionary to map all possible gene IDs to ENSEMBL Gene ID
+'''#Create a dictionary to map all possible gene IDs to ENSEMBL Gene ID
 dict_dge = dict(zip(df_id['Name'],df_id['Preferred_Name']))
 
 
@@ -193,4 +193,4 @@ ensurePathExists(path_gpickle)
 nx.write_edgelist(SG, path_edgelist)
 
 end = time.time()
-print("Done, runtime : {:}".format(end-start))
+print("Done, runtime : {:}".format(end-start))'''
