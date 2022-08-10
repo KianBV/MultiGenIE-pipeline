@@ -154,6 +154,24 @@ all_ort_edges = list(chain(*all_ort_edges))
 #Filter out the ones where the gene has an interacton with itself
 all_ort_edges = [i for i in all_ort_edges if i[0] != i[1]]
 
+#Since multiple orthologs from the same organism might be present in the same orthogroup, the list should be filtered for the interactions between genes of the same organism
+#Turn it into a dataframe
+df_all_ort_edges = pd.DataFrame(all_ort_edges, columns = ['Gene_A','Gene_B'])
+#Make an aditional column to map the gene to their organism
+df_all_ort_edges['Gene_A_c']=df_all_ort_edges['Gene_A']
+df_all_ort_edges['Gene_B_c']=df_all_ort_edges['Gene_B']
+#Map the gene to the organism
+dict_filter = dict(zip(df_id['Preferred_Name'],df_id['organism']))
+df_all_ort_edges['Gene_A_c']=df_all_ort_edges['Gene_A_c'].map(dict_filter)
+df_all_ort_edges['Gene_B_c']=df_all_ort_edges['Gene_B_c'].map(dict_filter)
+#Filter out the interactons where both genes belong to the same organism
+df_all_ort_edges = df_all_ort_edges.loc[df_all_ort_edges['Gene_A_c'] != df_all_ort_edges['Gene_B_c']]
+#Turn it back into a tuple list for easy add to the graph
+all_ort_edges = list(zip(df_all_ort_edges['Gene_A'],df_all_ort_edges['Gene_B']))
+
+
+
+
 print("Adding the cross-edges")
 #Add the edges to our graph
 G.add_edges_from(all_ort_edges, type='cross')
@@ -173,7 +191,7 @@ ensurePathExists(path_gpickle)
 nx.write_edgelist(G, path_edgelist)
 print("Exported the .edgelist")
 
-path_graphml = 'C:/Users/Kian/Desktop/Kian_Praksa/IGC/databases/results/{db}/Gephi/Graph/02_DGE_global_network_TPM_cutoff_{tpm}.graphml'.format(db = database, tpm = TPM_cutoff)
+path_graphml = 'C:/Users/Kian/Desktop/Kian_Praksa/IGC/databases/results/{db}/Gephi/graphml/02_DGE_global_network_TPM_cutoff_{tpm}.graphml'.format(db = database, tpm = TPM_cutoff)
 ensurePathExists(path_graphml)
 nx.write_graphml(G, path_graphml)
 print("Exported the .graphml")
