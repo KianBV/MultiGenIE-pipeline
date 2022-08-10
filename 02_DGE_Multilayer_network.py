@@ -9,6 +9,7 @@ from utils import ensurePathExists, open_undefined_last_column_files
 import time 
 from itertools import chain, product
 
+start = time.time()
 pd.set_option('display.max_rows', 100)
 pd.set_option('display.max_columns', 500)
 pd.set_option('display.width', 1000)
@@ -19,6 +20,30 @@ TPM_cutoff = 60
 all_organisms = ["Homo_sapiens","Mus_musculus","Drosophila_melanogaster"]
 
 organism_Egg_ids = ['9606', '10090','7227', '10116', '7955', '6239']
+
+G = nx.Graph()
+
+
+
+def id_getter(organism):
+	#combines all the id files into a single file and indexes the organism
+	df_id = pd.read_table("C:/Users/Kian/Desktop/Kian_Praksa/IGC/databases/Raw_data/{db}/ID_files/raw/{x}_id.txt".format(db = database, x = organism))
+	df_id['organism'] = organism
+	return df_id
+
+#Create the ID tables and indices needed to change all IDS to ENSEMBL stable gene IDs
+print("Starting with ID files")
+df_id = pd.concat([id_getter(i) for i in all_organisms])
+df_ENS_id = df_id.loc[(df_id["Source"]=="Ensembl Gene ID")].drop_duplicates(subset=["Preferred_Name"])
+#Make the preferred name vs ENS id dictionary
+dict_ENS_id = dict(df_ENS_id.loc[:, ["Preferred_Name", "Name"]].values)
+#Make a df to link ENSEMBL Gene ID to all other IDs
+df_id["Preferred_Name"] = df_id["Preferred_Name"].map(dict_ENS_id)
+#Make a df that links ENSEBL Protein and Gene id
+df_prot_id = df_id.loc[(df_id["Source"]=="Ensembl Protein ID")].rename( {"Name":"Protein_id"}, axis = 1)
+print("Done with ID files")
+#Create a dict that will match all possible gene IDs to the GeneMANIA preffered ID
+dict_dge = dict(zip(df_id['Name'],df_id['Preferred_Name']))
 
 
 def global_network_maker(organism):
@@ -60,35 +85,12 @@ def global_network_maker(organism):
 	#combine the edges 
 	G.add_edges_from([(i, j, d) for (i, j), d in zip(edge_idx, edge_attr)])
 	print(G)
-start = time.time()
+
 G = nx.Graph()
-
-
-
-def id_getter(organism):
-	#combines all the id files into a single file and indexes the organism
-	df_id = pd.read_table("C:/Users/Kian/Desktop/Kian_Praksa/IGC/databases/Raw_data/{db}/ID_files/raw/{x}_id.txt".format(db = database, x = organism))
-	df_id['organism'] = organism
-	return df_id
-
-#Create the ID tables and indices needed to change all IDS to ENSEMBL stable gene IDs
-print("Starting with ID files")
-df_id = pd.concat([id_getter(i) for i in all_organisms])
-df_ENS_id = df_id.loc[(df_id["Source"]=="Ensembl Gene ID")].drop_duplicates(subset=["Preferred_Name"])
-#Make the preferred name vs ENS id dictionary
-dict_ENS_id = dict(df_ENS_id.loc[:, ["Preferred_Name", "Name"]].values)
-#Make a df to link ENSEMBL Gene ID to all other IDs
-df_id["Preferred_Name"] = df_id["Preferred_Name"].map(dict_ENS_id)
-#Make a df that links ENSEBL Protein and Gene id
-df_prot_id = df_id.loc[(df_id["Source"]=="Ensembl Protein ID")].rename( {"Name":"Protein_id"}, axis = 1)
-print("Done with ID files")
-#Create a dict that will match all possible gene IDs to the GeneMANIA preffered ID
-dict_dge = dict(zip(df_id['Name'],df_id['Preferred_Name']))
-
 
 for i in all_organisms:
 	global_network_maker(i)
-print("Add organisms added, starting with cross edges")
+print("All organisms added, starting with cross edges")
 #Create a df with all nodes and their respecitve organism from the graph data
 all_graph_nodes = pd.DataFrame(G.nodes(data = 'layer'), columns = ['node', 'organism'])
 
