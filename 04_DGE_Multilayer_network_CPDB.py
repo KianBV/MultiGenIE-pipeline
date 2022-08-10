@@ -12,6 +12,7 @@ pd.set_option('display.width', 1000)
 start = time.time()
 
 TPM_cutoff = 60
+#Potential organsims are "Homo_sapiens","Mus_musculus","Drosophila_melanogaster","Rattus_norvegicus","Caenorhabditis_elegans"
 
 all_organisms = ["Homo_sapiens","Mus_musculus"]
 organism_Egg_ids = ['9606', '10090']
@@ -33,6 +34,14 @@ df_edges_hs['weight'] = df_data_hs['interaction_confidence']
 df_edges_hs = df_edges_hs.replace(r'^\s*$', np.nan, regex=True).dropna()
 #Keep only the ones that code for a protein
 df_edges_hs = df_edges_hs.loc[df_edges_hs['Gene_A'].isin(df_id_hs['Gene stable ID']) & df_edges_hs['Gene_B'].isin(df_id_hs['Gene stable ID'])]
+
+#input the DGE list
+df_dge_hs = pd.read_csv("C:/Users/Kian/Desktop/Kian_Praksa/IGC/databases/Raw_data/Test_data/spermatocyte_FPKM/Homo_sapiens-FPKM-spermatocyte.csv.gz")
+#filter the DGE
+df_dge_hs = df_dge_hs.dropna(subset=["id_gene"]).loc[df_dge_hs['TPM'] > TPM_cutoff,:]
+#filter the edges for the dge genes
+df_edges_hs = df_edges_hs.loc[df_edges_hs['Gene_A'].isin(df_dge_hs['id_gene']) & df_edges_hs['Gene_B'].isin(df_dge_hs['id_gene'])]
+
 #Obtains the list of all nodes
 all_nodes_hs = pd.Series(pd.unique(df_edges_hs[['Gene_A', 'Gene_B']].values.ravel('K')))
 print("Adding nodes")
@@ -53,7 +62,7 @@ print(G)
 print("Homo sapines added, starting with cross edges")
 
 #Mus Musculus data - a bit more complicated because it first has to be mapped to ENSEMBL ID 
-
+print("Starting with Mus musculus")
 #Import the ENSEMBL : UniProt ID file
 df_id_mm = pd.read_table("C:/Users/Kian/Desktop/Kian_Praksa/IGC/databases/Raw_data/IDs/Mus_musculus_ENSEMBL_ID.txt")
 #Input the Uniprot Entry Name : Gene ID file
@@ -82,7 +91,14 @@ df_edges_mm["Gene_B"] = df_edges_mm["Gene_B"].map(dict_ENS_UNI)
 #Remove NaNs
 df_edges_mm = df_edges_mm.dropna()
 
-#Add Nodes
+#input the DGE list
+df_dge_mm = pd.read_csv("C:/Users/Kian/Desktop/Kian_Praksa/IGC/databases/Raw_data/Test_data/spermatocyte_FPKM/Mus_musculus-FPKM-spermatocyte.csv.gz")
+#filter the DGE
+df_dge_mm = df_dge_mm.dropna(subset=["id_gene"]).loc[df_dge_mm['TPM'] > TPM_cutoff,:]
+#filter the edges for the dge genes
+df_edges_mm = df_edges_mm.loc[df_edges_mm['Gene_A'].isin(df_dge_mm['id_gene']) & df_edges_mm['Gene_B'].isin(df_dge_mm['id_gene'])]
+
+
 #Gets all mm nodes
 all_nodes_mm = pd.unique(df_edges_mm[['Gene_A', 'Gene_B']].values.ravel('K'))
 print("Adding nodes")
@@ -160,7 +176,7 @@ df_Egg = df_Egg.dropna()
 
 def ortholog_edge_generator(row):
 	#Takes in a series of EGGnogg orthogroups, filters them for the genes present in our network, and outputs their edges
-	print()
+
 	#Filter the ortholog groups by the genes within our network
 	orthologs = [x for x in row if x in Egg_id_set]
 	orthologs = list(map(dict_gene_prot.get, orthologs))
@@ -202,21 +218,20 @@ G.add_edges_from(all_ort_edges, type='cross')
 print("Added all the cross-edges")
 print("Full network complete")
 print(G)
-print(G)
 
 print('Exporting the full newtwork')
 #Write in gpickle
-path_gpickle = 'C:/Users/Kian/Desktop/Kian_Praksa/IGC/databases/results/CPDB/Total_network/03_global_network.gpickle'
+path_gpickle = 'C:/Users/Kian/Desktop/Kian_Praksa/IGC/databases/results/CPDB/DGE_network/02_DGE_global_network_TPM_cutoff_{tpm}.gpickle'.format(tpm = TPM_cutoff)
 ensurePathExists(path_gpickle)
 nx.write_gpickle(G,path_gpickle)
 print("Exported the .gpickle")
 
-path_edgelist = 'C:/Users/Kian/Desktop/Kian_Praksa/IGC/databases/results/CPDB/Total_network/03_global_network.edgelist'
+path_edgelist = 'C:/Users/Kian/Desktop/Kian_Praksa/IGC/databases/results/CPDB/DGE_network/02_DGE_global_network_TPM_cutoff_{tpm}.edgelist'.format(tpm = TPM_cutoff)
 ensurePathExists(path_gpickle)
 nx.write_edgelist(G, path_edgelist)
 print("Exported the .edgelist")
 
-path_graphml = 'C:/Users/Kian/Desktop/Kian_Praksa/IGC/databases/results/CPDB/Gephi/graphml/03_global_network_.graphml'
+path_graphml = 'C:/Users/Kian/Desktop/Kian_Praksa/IGC/databases/results/CPDB/Gephi/graphml/02_DGE_global_network_TPM_cutoff_{tpm}.graphml'.format(tpm = TPM_cutoff)
 ensurePathExists(path_graphml)
 nx.write_graphml(G, path_graphml)
 print("Exported the .graphml")
