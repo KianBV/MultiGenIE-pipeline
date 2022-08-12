@@ -1,15 +1,26 @@
+#Date: 9.8.2022.
+#Written by: Kian Bigović Villi
+#The script inputs a geneMANIA edgelist of a set of organismns, changes all of the Gene IDs to ENSEMBL gene ID, and outputs a multilayered network of the GeneMANIA interactions baes on the input gene expression data.
+#The full script takes around 4ish minutes on my computer (16GB RAM memory, 2,5 GHz CPU, 512 GB SSD) - This is much faster than making the full network and filtering it later.
 import numpy as np
 import pandas as pd
 import networkx as nx
 from utils import ensurePathExists, open_undefined_last_column_files
 import time 
 from itertools import chain, product
+pd.options.mode.chained_assignment = None  # default='warn'
+
 pd.set_option('display.max_rows', 100)
 pd.set_option('display.max_columns', 500)
 pd.set_option('display.width', 1000)
 
+class MyDict(dict):
+	def __missing__(self, key):
+		return key
 
-start = time.time()
+
+
+
 
 
 #The cuttoff for the gene being expressed
@@ -17,55 +28,93 @@ TPM_cutoff = 1
 #Potential organsims are "Homo_sapiens","Mus_musculus","Drosophila_melanogaster","Rattus_norvegicus","Danio rerio", "Caenorhabditis_elegans"
 all_organisms = ["Homo_sapiens","Mus_musculus","Drosophila_melanogaster"]
 #Potential IDs are '9606', '10090','7227', '10116', '7955', '6239'
-organism_Egg_ids = [9606, 10090, 7227]
+organism_Egg_ids = ['9606', '10090','7227']
 #Potential cells are 'enterocyte', 'neuron', 'muscle', 'spermatogonia', 'spermatocyte', 'spermatid'
-cell_type = 'neuron'
+cell_type = 'muscle'
 
+#Database specific identifiers
+column_set = ['#ID(s) interactor A', 'ID(s) interactor B', 'Alt. ID(s) interactor A', 'Alt. ID(s) interactor B', 'Taxid interactor A', 'Taxid interactor B', 'Confidence value(s)', 'Interaction type(s)']
+organism_set = ['taxid:9606(human)|taxid:9606(Homo sapiens)', 'taxid:10090(mouse)|taxid:10090(Mus musculus)', 'taxid:7227(drome)|taxid:7227("Drosophila melanogaster (Fruit fly)")']
 
-
-
-
-print("Starting")
+start = time.time()
 G = nx.Graph()
-print("Inputing full Mentha edge data")
-#Input egde data
-df_data = pd.read_table("C:/Users/Kian/Desktop/Kian_Praksa/IGC/databases/Raw_data/Mentha/Full_mentha", sep = ";")
-#Filter out the intra edges of our organims of interest
-df_edges = df_data.loc[df_data['Taxon A'].isin(organism_Egg_ids) & df_data['Taxon B'].isin(organism_Egg_ids) & (df_data['Taxon A'] == df_data['Taxon B']) ,:]
-#Take the edge data into it
-df_edges = df_edges.loc[:, ['Protein A', 'Protein B', 'Taxon A', 'Score']].rename(columns = {'Protein A' : 'Gene_A', 'Protein B' : 'Gene_B', 'Taxon A' : 'organism', 'Score' : 'weight'})
-#organism id to name
-dict_organism = dict(zip(organism_Egg_ids, all_organisms))
-df_edges['organism'] = df_edges['organism'].map(dict_organism)
-print("Filtered edge data by organisms")
-print("Inputing IDs")
+print("Starting.")
+print("Loading edge data")
+df_intact = pd.read_table("C:/Users/Kian/Desktop/Kian_Praksa/IGC/databases/Raw_data/Intact/intact.txt")
+print("Proccesing edge data")
+df_intact = df_intact.loc[df_intact['Taxid interactor A'].isin(organism_set) & df_intact['Taxid interactor B'].isin(organism_set), column_set]
+
+#Remvoe interspecies interactions
+df_intact = df_intact.loc[df_intact['Taxid interactor A'] == df_intact['Taxid interactor B']]
+
+#Get scores as numbers
+df_intact['weight'] = df_intact['Confidence value(s)'].str.extract('miscore:(.*)', expand = True)
+df_intact['weight'] = df_intact['weight'].astype('float')
+#Take the average of all scores for a certain pair of interactions
+df_edges = df_intact.groupby(['#ID(s) interactor A','ID(s) interactor B','Taxid interactor B'])['weight'].mean().reset_index()
+df_edges = df_edges.rename(columns = {'#ID(s) interactor A':'Gene_A','ID(s) interactor B':'Gene_B', 'Taxid interactor B':"organism"})
+
+#Get a list of all genes
+df_id = pd.concat([df_intact.loc[:, ['#ID(s) interactor A','Alt. ID(s) interactor A', 'Taxid interactor A']].rename(columns = {'#ID(s) interactor A':'gene_id','Alt. ID(s) interactor A':'alt_id','Taxid interactor A':'organism'}),
+					df_intact.loc[:, ['ID(s) interactor B','Alt. ID(s) interactor B', 'Taxid interactor B']].rename(columns = {'ID(s) interactor B':'gene_id','Alt. ID(s) interactor B':'alt_id','Taxid interactor B':'organism'}) ])
+#Drop duplicates
+df_id = df_id.drop_duplicates()
+df_id_1 = df_id.loc[df_id['gene_id'].str.contains('ensembl')]
+df_id_2 = df_id.loc[df_id['alt_id'].str.contains('ensembl')]
+
+df_id_1['ENS_id'] = df_id_1['gene_id'].str.extract('ensembl:(.*)', expand = True)
+df_id_2['ENS_id'] = df_id_2['alt_id'].str.extract('ensembl:(.*)', expand = True)
+
+df_id_1['ENS_id'] = df_id_1['ENS_id'].str.extract('(^[^\\.]*)', expand = True)
+df_id_2['ENS_id'] = df_id_2['ENS_id'].str.extract('^([^|]*).*', expand = True)
+df_id_2['ENS_id'] = df_id_2['ENS_id'].str.extract('^([^.]*).*', expand = True)
+
+df_ENS_id = pd.concat([df_id_1.dropna(),df_id_2.dropna()])
+
+#Ok al jel mi ovo treba?
+dict_org_id = dict(zip(organism_set, all_organisms))
+df_ENS_id['organism'] = df_ENS_id['organism'].map(dict_org_id)
+dict_edges_pref = dict(zip(df_ENS_id['gene_id'], df_ENS_id['ENS_id']))
+
+
+df_edges['Gene_A'] = df_edges['Gene_A'].map(dict_edges_pref)
+df_edges['Gene_B'] = df_edges['Gene_B'].map(dict_edges_pref)
+#TU su sada u ENSG ali ima i ENST i ENSP
+df_edges = df_edges.dropna()
+
+
 def id_getter(organism):
 	#Fetch the ENSEMBL ID vs UniProt ID files
 	if organism in ["Drosophila_melanogaster","Caenorhabditis_elegans"]:
-		#Drosophila and Caenorhabditis done have protein ID versions
-		df_id = pd.read_table("C:/Users/Kian/Desktop/Kian_Praksa/IGC/databases/Raw_data/IDs/{x}_ENSEMBL_ID.txt".format(x = organism))
-		df_id = df_id.rename(columns = {'Gene stable ID' : 'Preferred_Name', 'Protein stable ID' : 'Protein_id', 'UniProtKB Gene Name ID': 'Uni_Protein_id', 'UniProtKB/Swiss-Prot ID' : "Uni_Protein_id"})
+		#Drosophila and Caenorhabditis done hasve protein ID versions
+		df_id = pd.read_table("C:/Users/Kian/Desktop/Kian_Praksa/IGC/databases/Raw_data/IDs/Intact/{x}_ENSEMBL_ID.txt".format(x = organism))
+		df_id = df_id.rename(columns = {'Gene stable ID' : 'Preferred_Name', 'Protein stable ID' : 'Protein_id', 'Transcript stable ID': 'Transcript_id'})
 		df_id['organism'] = organism
 	else:
 		#The rest have them, and they are used in Eggnogg
-		df_id = pd.read_table("C:/Users/Kian/Desktop/Kian_Praksa/IGC/databases/Raw_data/IDs/{x}_ENSEMBL_ID.txt".format(x = organism))
+		df_id = pd.read_table("C:/Users/Kian/Desktop/Kian_Praksa/IGC/databases/Raw_data/IDs/Intact/{x}_ENSEMBL_ID.txt".format(x = organism))
 		df_id = pd.concat([df_id.drop('Protein stable ID', axis = 1).rename(columns = {'Protein stable ID version' : 'Protein stable ID'}), df_id.drop('Protein stable ID version', axis = 1)])
-		df_id = df_id.rename(columns = {'Gene stable ID' : 'Preferred_Name', 'Protein stable ID' : 'Protein_id', 'UniProtKB Gene Name ID': 'Uni_Protein_id'})
+		df_id = df_id.rename(columns = {'Gene stable ID' : 'Preferred_Name', 'Protein stable ID' : 'Protein_id', 'Transcript stable ID': 'Transcript_id'})
 		df_id['organism'] = organism
 	return df_id
 
 #Combine all ID's into a single file
-df_all_id = pd.concat([id_getter(i) for i in all_organisms]).dropna(subset = ['Uni_Protein_id'])
-#Make a dictionary to turn the UniProt ID to ENSEMBL ID - Note that this will lose quite a bit of our interactions
-dict_ENS_id = dict(zip(df_all_id['Uni_Protein_id'], df_all_id['Preferred_Name']))
+df_all_id = pd.concat([id_getter(i) for i in all_organisms])
 
-#Map it to the edge file
-df_edges['Gene_A'] = df_edges['Gene_A'].map(dict_ENS_id)
-df_edges['Gene_B'] = df_edges['Gene_B'].map(dict_ENS_id)
-df_edges = df_edges.dropna()
-print("Done with IDs")
-print("Print inputing DEGs")
-#Loads the DEGs
+
+df_trans_id = df_all_id.loc[:, ["Preferred_Name", "Transcript_id"]].dropna().rename(columns = {"Transcript_id":"alt_id"})
+df_prot_id = df_all_id.loc[:,["Preferred_Name", "Protein_id"]].dropna().rename(columns = {"Protein_id":"alt_id"})
+
+
+df_dict_id = pd.concat([df_trans_id,df_prot_id])
+dict_alt_id = MyDict(dict(zip(df_dict_id['alt_id'],df_dict_id['Preferred_Name'])))
+
+
+df_edges['Gene_A'] = df_edges['Gene_A'].map(dict_alt_id)
+df_edges['Gene_B'] = df_edges['Gene_B'].map(dict_alt_id)
+df_edges['organism'] = df_edges['organism'].map(dict_org_id)
+print("Processed edge data")
+print("Getting DGE data")
 def deg_getter(organism):
 	#Input the DGE data
 	df_dge = pd.read_csv("C:/Users/Kian/Desktop/Kian_Praksa/IGC/databases/Raw_data/Test_data/{c}/{org}-FPKM-{c}.csv.gz".format(org = organism, c = cell_type))
@@ -77,22 +126,19 @@ df_all_dge = pd.concat([deg_getter(i) for i in all_organisms])
 #Filter out the DEGs
 df_edges = df_edges.loc[df_edges['Gene_A'].isin(df_all_dge['id_gene']) & df_edges['Gene_B'].isin(df_all_dge['id_gene'])]
 print("Filtered by Degs")
-print("Adding nodes")
-#Get a list of all nodes
+
+
+
 df_all_nodes = pd.concat([df_edges.drop(['Gene_A', 'weight'], axis = 1).rename(columns = {'Gene_B' : 'node'}), df_edges.drop(['Gene_B', 'weight'], axis = 1).rename(columns = {'Gene_A' : 'node'})])
 df_all_nodes = df_all_nodes.drop_duplicates().rename(columns = {'organism' : 'layer'})
-
-
-
-
-#Adds nodes
 G.add_nodes_from(df_all_nodes['node'])
 #Add the attributes
 attrs = df_all_nodes.set_index('node').T.to_dict()
 nx.set_node_attributes(G, attrs)
 print("Added nodes")
 print("Adding edges")
-#Drop the organism column
+
+#Drop organism column
 df_edges = df_edges.drop(['organism'], axis = 1)
 df_edges["type"]='intra'
 #Index the edges
@@ -105,12 +151,11 @@ G.add_edges_from([(i, j, d) for (i, j), d in zip(edge_idx, edge_attr)])
 print("Added edges")
 print(G)
 
-print("Setting up EGGnogg IDs")
 all_graph_nodes = df_all_nodes.rename(columns = {'layout' : 'organism'})
 
-df_prot_id = df_all_id.loc[df_all_id['Preferred_Name'].isin(all_graph_nodes['node'])].copy()
-#Create the organism, EGGnog id dictionary
-organism_Egg_ids = [str(i) for i in organism_Egg_ids]
+df_prot_id = df_all_id.loc[:, ['Preferred_Name','Protein_id','organism']].dropna()
+df_prot_id = df_prot_id.loc[df_prot_id['Preferred_Name'].isin(all_graph_nodes['node'])]
+
 dict_org = dict(zip(all_organisms, organism_Egg_ids))
 #Map the EGGnog id
 df_prot_id['organism'] = df_prot_id['organism'].map(dict_org)
@@ -195,17 +240,16 @@ print(G)
 
 print('Exporting the full newtwork')
 #Write in gpickle
-path_gpickle = 'C:/Users/Kian/Desktop/Kian_Praksa/IGC/databases/results/Mentha/DGE_network/05_DGE_{c}_global_network_TPM_cutoff_{tpm}.gpickle'.format(tpm = TPM_cutoff, c = cell_type)
-ensurePathExists(path_gpickle)
+path_gpickle = 'C:/Users/Kian/Desktop/Kian_Praksa/IGC/databases/results/IntAct/DGE_network/08_DGE_{c}_global_network_TPM_cutoff_{tpm}.graphml'.format(tpm = TPM_cutoff, c = cell_type)
 nx.write_gpickle(G,path_gpickle)
 print("Exported the .gpickle")
 
-path_edgelist = 'C:/Users/Kian/Desktop/Kian_Praksa/IGC/databases/results/Mentha/DGE_network/05_DGE_{c}_global_network_TPM_cutoff_{tpm}.edgelist'.format(tpm = TPM_cutoff, c = cell_type)
+path_edgelist = 'C:/Users/Kian/Desktop/Kian_Praksa/IGC/databases/results/IntAct/DGE_network/08_DGE_{c}_global_network_TPM_cutoff_{tpm}.graphml'.format(tpm = TPM_cutoff, c = cell_type)
 ensurePathExists(path_gpickle)
 nx.write_edgelist(G, path_edgelist)
 print("Exported the .edgelist")
 
-path_graphml = 'C:/Users/Kian/Desktop/Kian_Praksa/IGC/databases/results/Mentha/Gephi/graphml/05_DGE_{c}_global_network_TPM_cutoff_{tpm}.graphml'.format(tpm = TPM_cutoff, c = cell_type)
+path_graphml = 'C:/Users/Kian/Desktop/Kian_Praksa/IGC/databases/results/IntAct/Gephi/graphml/08_DGE_{c}_global_network_TPM_cutoff_{tpm}.graphml'.format(tpm = TPM_cutoff, c = cell_type)
 ensurePathExists(path_graphml)
 nx.write_graphml(G, path_graphml)
 print("Exported the .graphml")

@@ -14,7 +14,8 @@ pd.set_option('display.max_rows', 100)
 pd.set_option('display.max_columns', 500)
 pd.set_option('display.width', 1000)
 database = "GeneMANIA"
-TPM_cutoff = 60
+TPM_cutoff = 1
+cell_type = 'Spermatocyte'
 #Potential organsims are "Homo_sapiens","Mus_musculus","Drosophila_melanogaster","Rattus_norvegicus","Danio_rerio","Caenorhabditis_elegans"
 
 all_organisms = ["Homo_sapiens","Mus_musculus","Drosophila_melanogaster"]
@@ -61,7 +62,7 @@ def global_network_maker(organism):
 
 
 	#Input the DGE data
-	df_dge = pd.read_csv("C:/Users/Kian/Desktop/Kian_Praksa/IGC/databases/Raw_data/Test_data/spermatocyte_FPKM/{:}-FPKM-spermatocyte.csv.gz".format(organism))
+	df_dge = pd.read_csv("C:/Users/Kian/Desktop/Kian_Praksa/IGC/databases/Raw_data/Test_data/{c}/{org}-FPKM-{c}.csv.gz".format(org = organism, c = cell_type))
 	#Change the DGE IDs
 	df_dge["id_gene"] = df_dge["id_gene"].map(dict_dge)
 	#Remove the NAs and filter the dge data
@@ -181,17 +182,17 @@ print(G)
 
 print('Exporting the full newtwork')
 #Write in gpickle
-path_gpickle = 'C:/Users/Kian/Desktop/Kian_Praksa/IGC/databases/results/{db}/DGE_network/02_DGE_global_network_TPM_cutoff_{tpm}.gpickle'.format(db = database, tpm = TPM_cutoff)
+path_gpickle = 'C:/Users/Kian/Desktop/Kian_Praksa/IGC/databases/results/{db}/DGE_network/02_DGE_{c}_global_network_TPM_cutoff_{tpm}.gpickle'.format(db = database, tpm = TPM_cutoff, c = cell_type)
 ensurePathExists(path_gpickle)
 nx.write_gpickle(G,path_gpickle)
 print("Exported the .gpickle")
 
-path_edgelist = 'C:/Users/Kian/Desktop/Kian_Praksa/IGC/databases/results/{db}/DGE_network/02_DGE_global_network_TPM_cutoff_{tpm}.edgelist'.format(db = database, tpm = TPM_cutoff)
+path_edgelist = 'C:/Users/Kian/Desktop/Kian_Praksa/IGC/databases/results/{db}/DGE_network/02_DGE_{c}_global_network_TPM_cutoff_{tpm}.edgelist'.format(db = database, tpm = TPM_cutoff, c = cell_type)
 ensurePathExists(path_gpickle)
 nx.write_edgelist(G, path_edgelist)
 print("Exported the .edgelist")
 
-path_graphml = 'C:/Users/Kian/Desktop/Kian_Praksa/IGC/databases/results/{db}/Gephi/graphml/02_DGE_global_network_TPM_cutoff_{tpm}.graphml'.format(db = database, tpm = TPM_cutoff)
+path_graphml = 'C:/Users/Kian/Desktop/Kian_Praksa/IGC/databases/results/{db}/Gephi/graphml/02_DGE_{c}_global_network_TPM_cutoff_{tpm}.graphml'.format(db = database, tpm = TPM_cutoff, c = cell_type)
 ensurePathExists(path_graphml)
 nx.write_graphml(G, path_graphml)
 print("Exported the .graphml")

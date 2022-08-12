@@ -11,12 +11,12 @@ pd.set_option('display.width', 1000)
 
 start = time.time()
 
-TPM_cutoff = 60
+TPM_cutoff = 1
 #Potential organsims are "Homo_sapiens","Mus_musculus","Drosophila_melanogaster","Rattus_norvegicus","Caenorhabditis_elegans"
 
 all_organisms = ["Homo_sapiens","Mus_musculus"]
 organism_Egg_ids = ['9606', '10090']
-
+cell_type = 'Spermatocyte'
 
 df_id_hs = pd.read_table("C:/Users/Kian/Desktop/Kian_Praksa/IGC/databases/Raw_data/IDs/Homo_sapiens_ENSEMBL_ID.txt")
 print('Starting with the network')
@@ -36,7 +36,7 @@ df_edges_hs = df_edges_hs.replace(r'^\s*$', np.nan, regex=True).dropna()
 df_edges_hs = df_edges_hs.loc[df_edges_hs['Gene_A'].isin(df_id_hs['Gene stable ID']) & df_edges_hs['Gene_B'].isin(df_id_hs['Gene stable ID'])]
 
 #input the DGE list
-df_dge_hs = pd.read_csv("C:/Users/Kian/Desktop/Kian_Praksa/IGC/databases/Raw_data/Test_data/spermatocyte_FPKM/Homo_sapiens-FPKM-spermatocyte.csv.gz")
+df_dge_hs = pd.read_csv("C:/Users/Kian/Desktop/Kian_Praksa/IGC/databases/Raw_data/Test_data/{c}/Homo_sapiens-FPKM-{c}.csv.gz".format(c = cell_type))
 #filter the DGE
 df_dge_hs = df_dge_hs.dropna(subset=["id_gene"]).loc[df_dge_hs['TPM'] > TPM_cutoff,:]
 #filter the edges for the dge genes
@@ -92,8 +92,7 @@ df_edges_mm["Gene_B"] = df_edges_mm["Gene_B"].map(dict_ENS_UNI)
 df_edges_mm = df_edges_mm.dropna()
 
 #input the DGE list
-df_dge_mm = pd.read_csv("C:/Users/Kian/Desktop/Kian_Praksa/IGC/databases/Raw_data/Test_data/spermatocyte_FPKM/Mus_musculus-FPKM-spermatocyte.csv.gz")
-#filter the DGE
+df_dge_mm = pd.read_csv("C:/Users/Kian/Desktop/Kian_Praksa/IGC/databases/Raw_data/Test_data/{c}/Mus_musculus-FPKM-{c}.csv.gz".format( c = cell_type))
 df_dge_mm = df_dge_mm.dropna(subset=["id_gene"]).loc[df_dge_mm['TPM'] > TPM_cutoff,:]
 #filter the edges for the dge genes
 df_edges_mm = df_edges_mm.loc[df_edges_mm['Gene_A'].isin(df_dge_mm['id_gene']) & df_edges_mm['Gene_B'].isin(df_dge_mm['id_gene'])]
@@ -221,17 +220,17 @@ print(G)
 
 print('Exporting the full newtwork')
 #Write in gpickle
-path_gpickle = 'C:/Users/Kian/Desktop/Kian_Praksa/IGC/databases/results/CPDB/DGE_network/02_DGE_global_network_TPM_cutoff_{tpm}.gpickle'.format(tpm = TPM_cutoff)
+path_gpickle = 'C:/Users/Kian/Desktop/Kian_Praksa/IGC/databases/results/CPDB/DGE_network/02_DGE_{c}_global_network_TPM_cutoff_{tpm}.gpickle'.format(tpm = TPM_cutoff, c = cell_type)
 ensurePathExists(path_gpickle)
 nx.write_gpickle(G,path_gpickle)
 print("Exported the .gpickle")
 
-path_edgelist = 'C:/Users/Kian/Desktop/Kian_Praksa/IGC/databases/results/CPDB/DGE_network/02_DGE_global_network_TPM_cutoff_{tpm}.edgelist'.format(tpm = TPM_cutoff)
+path_edgelist = 'C:/Users/Kian/Desktop/Kian_Praksa/IGC/databases/results/CPDB/DGE_network/02_DGE_{c}_global_network_TPM_cutoff_{tpm}.edgelist'.format(tpm = TPM_cutoff, c = cell_type)
 ensurePathExists(path_gpickle)
 nx.write_edgelist(G, path_edgelist)
 print("Exported the .edgelist")
 
-path_graphml = 'C:/Users/Kian/Desktop/Kian_Praksa/IGC/databases/results/CPDB/Gephi/graphml/02_DGE_global_network_TPM_cutoff_{tpm}.graphml'.format(tpm = TPM_cutoff)
+path_graphml = 'C:/Users/Kian/Desktop/Kian_Praksa/IGC/databases/results/CPDB/Gephi/graphml/02_DGE_{c}_global_network_TPM_cutoff_{tpm}.graphml'.format(tpm = TPM_cutoff, c = cell_type)
 ensurePathExists(path_graphml)
 nx.write_graphml(G, path_graphml)
 print("Exported the .graphml")
