@@ -18,30 +18,24 @@ class MyDict(dict):
 	def __missing__(self, key):
 		return key
 
-
-
-
-
-
-#The cuttoff for the gene being expressed
-TPM_cutoff = 1
-#Potential organsims are "Homo_sapiens","Mus_musculus","Drosophila_melanogaster","Rattus_norvegicus","Danio rerio", "Caenorhabditis_elegans"
-all_organisms = ["Homo_sapiens","Mus_musculus","Drosophila_melanogaster"]
-#Potential IDs are '9606', '10090','7227', '10116', '7955', '6239'
-organism_Egg_ids = ['9606', '10090','7227']
-#Potential cells are 'enterocyte', 'neuron', 'muscle', 'spermatogonia', 'spermatocyte', 'spermatid'
-cell_type = 'spermatid'
-
-#Database specific identifiers
-column_set = ['#ID(s) interactor A', 'ID(s) interactor B', 'Alt. ID(s) interactor A', 'Alt. ID(s) interactor B', 'Taxid interactor A', 'Taxid interactor B', 'Confidence value(s)', 'Interaction type(s)']
-organism_set = ['taxid:9606(human)|taxid:9606(Homo sapiens)', 'taxid:10090(mouse)|taxid:10090(Mus musculus)', 'taxid:7227(drome)|taxid:7227("Drosophila melanogaster (Fruit fly)")']
-
 start = time.time()
+
+column_set = ['#ID(s) interactor A', 'ID(s) interactor B', 'Alt. ID(s) interactor A', 'Alt. ID(s) interactor B', 'Taxid interactor A', 'Taxid interactor B', 'Confidence value(s)', 'Interaction type(s)']
+organism_set = ['taxid:9606(human)|taxid:9606(Homo sapiens)',
+				'taxid:10090(mouse)|taxid:10090(Mus musculus)',
+				'taxid:6239(caeel)|taxid:6239(Caenorhabditis elegans)',
+				'taxid:7227(drome)|taxid:7227("Drosophila melanogaster (Fruit fly)")',
+				'taxid:10116(rat)|taxid:10116("Rattus norvegicus (Rat)")',]
+all_organisms = ["Homo_sapiens","Mus_musculus","Drosophila_melanogaster","Rattus_norvegicus","Caenorhabditis_elegans"]
+organism_Egg_ids = ['9606', '10090','7227', '10116', '6239']
 G = nx.Graph()
-print("Starting.")
-print("Loading edge data")
+
+
+
+
+
 df_intact = pd.read_table("C:/Users/Kian/Desktop/Kian_Praksa/IGC/databases/Raw_data/Intact/intact.txt")
-print("Proccesing edge data")
+
 df_intact = df_intact.loc[df_intact['Taxid interactor A'].isin(organism_set) & df_intact['Taxid interactor B'].isin(organism_set), column_set]
 
 #Remvoe interspecies interactions
@@ -113,19 +107,10 @@ dict_alt_id = MyDict(dict(zip(df_dict_id['alt_id'],df_dict_id['Preferred_Name'])
 df_edges['Gene_A'] = df_edges['Gene_A'].map(dict_alt_id)
 df_edges['Gene_B'] = df_edges['Gene_B'].map(dict_alt_id)
 df_edges['organism'] = df_edges['organism'].map(dict_org_id)
-print("Processed edge data")
-print("Getting DGE data")
-def deg_getter(organism):
-	#Input the DGE data
-	df_dge = pd.read_csv("C:/Users/Kian/Desktop/Kian_Praksa/IGC/databases/Raw_data/Test_data/{c}/{org}-FPKM-{c}.csv.gz".format(org = organism, c = cell_type))
-	#Take only the DGE genes
-	df_dge = df_dge.dropna(subset=["id_gene"]).loc[df_dge['TPM'] > TPM_cutoff,:]
-	return df_dge
 
-df_all_dge = pd.concat([deg_getter(i) for i in all_organisms])
-#Filter out the DEGs
-df_edges = df_edges.loc[df_edges['Gene_A'].isin(df_all_dge['id_gene']) & df_edges['Gene_B'].isin(df_all_dge['id_gene'])]
-print("Filtered by Degs")
+
+
+
 
 
 
@@ -232,7 +217,7 @@ all_ort_edges = list(zip(df_all_ort_edges['Gene_A'],df_all_ort_edges['Gene_B']))
 print("Adding the cross-edges")
 #Add the edges to our graph
 print(G)
-G.add_edges_from(all_ort_edges, type='cross', weight = 1)
+G.add_edges_from(all_ort_edges, type='cross')
 print("Added all the cross-edges")
 print("Full network complete")
 print(G)
@@ -240,20 +225,21 @@ print(G)
 
 print('Exporting the full newtwork')
 #Write in gpickle
-path_gpickle = 'C:/Users/Kian/Desktop/Kian_Praksa/IGC/databases/results/IntAct/DGE_network/DGE_{c}_multilayer_network_TPM_cutoff_{tpm}.gpickle'.format(tpm = TPM_cutoff, c = cell_type)
+path_gpickle = 'C:/Users/Kian/Desktop/Kian_Praksa/IGC/databases/results/IntAct/Total_network/Genome_multilayer_network.gpickle'
+ensurePathExists(path_gpickle)
 nx.write_gpickle(G,path_gpickle)
 print("Exported the .gpickle")
-"""
-path_edgelist = 'C:/Users/Kian/Desktop/Kian_Praksa/IGC/databases/results/IntAct/DGE_network/DGE_{c}_multilayer_network_TPM_cutoff_{tpm}.edgelist'.format(tpm = TPM_cutoff, c = cell_type)
+
+path_edgelist = 'C:/Users/Kian/Desktop/Kian_Praksa/IGC/databases/results/IntAct/Total_network/Genome_multilayer_network.edgelist'
 ensurePathExists(path_gpickle)
 nx.write_edgelist(G, path_edgelist)
 print("Exported the .edgelist")
 
-path_graphml = 'C:/Users/Kian/Desktop/Kian_Praksa/IGC/databases/results/IntAct/Gephi/graphml/DGE_{c}_multilayer_network_TPM_cutoff_{tpm}.graphml'.format(tpm = TPM_cutoff, c = cell_type)
+path_graphml = 'C:/Users/Kian/Desktop/Kian_Praksa/IGC/databases/results/IntAct/Gephi/graphml/Genome_multilayer_network.graphml'
 ensurePathExists(path_graphml)
 nx.write_graphml(G, path_graphml)
 print("Exported the .graphml")
-"""
+
 print("Done with exporting")
 end = time.time()
 print("Done, runtime : {:}".format(end-start))

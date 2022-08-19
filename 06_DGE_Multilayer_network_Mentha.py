@@ -19,7 +19,7 @@ all_organisms = ["Homo_sapiens","Mus_musculus","Drosophila_melanogaster"]
 #Potential IDs are '9606', '10090','7227', '10116', '7955', '6239'
 organism_Egg_ids = [9606, 10090, 7227]
 #Potential cells are 'enterocyte', 'neuron', 'muscle', 'spermatogonia', 'spermatocyte', 'spermatid'
-cell_type = 'neuron'
+cell_type = 'spermatocyte'
 
 
 
@@ -187,7 +187,7 @@ all_ort_edges = list(zip(df_all_ort_edges['Gene_A'],df_all_ort_edges['Gene_B']))
 print("Adding the cross-edges")
 #Add the edges to our graph
 print(G)
-G.add_edges_from(all_ort_edges, type='cross')
+G.add_edges_from(all_ort_edges, type='cross', weight = 1)
 print("Added all the cross-edges")
 print("Full network complete")
 print(G)
@@ -195,21 +195,21 @@ print(G)
 
 print('Exporting the full newtwork')
 #Write in gpickle
-path_gpickle = 'C:/Users/Kian/Desktop/Kian_Praksa/IGC/databases/results/Mentha/DGE_network/05_DGE_{c}_global_network_TPM_cutoff_{tpm}.gpickle'.format(tpm = TPM_cutoff, c = cell_type)
+path_gpickle = 'C:/Users/Kian/Desktop/Kian_Praksa/IGC/databases/results/Mentha/DGE_network/DGE_{c}_multilayer_network_TPM_cutoff_{tpm}.gpickle'.format(tpm = TPM_cutoff, c = cell_type)
 ensurePathExists(path_gpickle)
 nx.write_gpickle(G,path_gpickle)
 print("Exported the .gpickle")
-
-path_edgelist = 'C:/Users/Kian/Desktop/Kian_Praksa/IGC/databases/results/Mentha/DGE_network/05_DGE_{c}_global_network_TPM_cutoff_{tpm}.edgelist'.format(tpm = TPM_cutoff, c = cell_type)
+"""
+path_edgelist = 'C:/Users/Kian/Desktop/Kian_Praksa/IGC/databases/results/Mentha/DGE_network/DGE_{c}_multilayer_network_TPM_cutoff_{tpm}.edgelist'.format(tpm = TPM_cutoff, c = cell_type)
 ensurePathExists(path_gpickle)
 nx.write_edgelist(G, path_edgelist)
 print("Exported the .edgelist")
 
-path_graphml = 'C:/Users/Kian/Desktop/Kian_Praksa/IGC/databases/results/Mentha/Gephi/graphml/05_DGE_{c}_global_network_TPM_cutoff_{tpm}.graphml'.format(tpm = TPM_cutoff, c = cell_type)
+path_graphml = 'C:/Users/Kian/Desktop/Kian_Praksa/IGC/databases/results/Mentha/Gephi/graphml/DGE_{c}_multilayer_network_TPM_cutoff_{tpm}.graphml'.format(tpm = TPM_cutoff, c = cell_type)
 ensurePathExists(path_graphml)
 nx.write_graphml(G, path_graphml)
 print("Exported the .graphml")
-
+"""
 print("Done with exporting")
 end = time.time()
 print("Done, runtime : {:}".format(end-start))

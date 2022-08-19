@@ -206,17 +206,17 @@ print(G)
 
 print('Exporting the full newtwork')
 #Write in gpickle
-path_gpickle = 'C:/Users/Kian/Desktop/Kian_Praksa/IGC/databases/results/CPDB/Total_network/03_global_network.gpickle'
+path_gpickle = 'C:/Users/Kian/Desktop/Kian_Praksa/IGC/databases/results/CPDB/Total_network/Genome_multilayer_network.gpickle'
 ensurePathExists(path_gpickle)
 nx.write_gpickle(G,path_gpickle)
 print("Exported the .gpickle")
 
-path_edgelist = 'C:/Users/Kian/Desktop/Kian_Praksa/IGC/databases/results/CPDB/Total_network/03_global_network.edgelist'
+path_edgelist = 'C:/Users/Kian/Desktop/Kian_Praksa/IGC/databases/results/CPDB/Total_network/Genome_multilayer_network.edgelist'
 ensurePathExists(path_gpickle)
 nx.write_edgelist(G, path_edgelist)
 print("Exported the .edgelist")
 
-path_graphml = 'C:/Users/Kian/Desktop/Kian_Praksa/IGC/databases/results/CPDB/Gephi/graphml/03_global_network_.graphml'
+path_graphml = 'C:/Users/Kian/Desktop/Kian_Praksa/IGC/databases/results/CPDB/Gephi/graphml/Genome_multilayer_network.graphml'
 ensurePathExists(path_graphml)
 nx.write_graphml(G, path_graphml)
 print("Exported the .graphml")

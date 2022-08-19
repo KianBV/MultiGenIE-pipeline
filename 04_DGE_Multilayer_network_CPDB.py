@@ -11,12 +11,14 @@ pd.set_option('display.width', 1000)
 
 start = time.time()
 
+#The cuttoff for the gene being expressed
 TPM_cutoff = 1
 #Potential organsims are "Homo_sapiens","Mus_musculus","Drosophila_melanogaster","Rattus_norvegicus","Caenorhabditis_elegans"
-
 all_organisms = ["Homo_sapiens","Mus_musculus"]
+#Potential IDs are '9606', '10090','7227', '10116', '7955', '6239'
 organism_Egg_ids = ['9606', '10090']
-cell_type = 'Spermatocyte'
+#Potential cells are 'enterocyte', 'neuron', 'muscle', 'spermatogonia', 'spermatocyte', 'spermatid'
+cell_type = 'spermatid'
 
 df_id_hs = pd.read_table("C:/Users/Kian/Desktop/Kian_Praksa/IGC/databases/Raw_data/IDs/Homo_sapiens_ENSEMBL_ID.txt")
 print('Starting with the network')
@@ -213,28 +215,28 @@ all_ort_edges = list(zip(df_all_ort_edges['Gene_A'],df_all_ort_edges['Gene_B']))
 print("Adding the cross-edges")
 #Add the edges to our graph
 print(G)
-G.add_edges_from(all_ort_edges, type='cross')
+G.add_edges_from(all_ort_edges, type='cross', weight = 1)
 print("Added all the cross-edges")
 print("Full network complete")
 print(G)
 
 print('Exporting the full newtwork')
 #Write in gpickle
-path_gpickle = 'C:/Users/Kian/Desktop/Kian_Praksa/IGC/databases/results/CPDB/DGE_network/02_DGE_{c}_global_network_TPM_cutoff_{tpm}.gpickle'.format(tpm = TPM_cutoff, c = cell_type)
+path_gpickle = 'C:/Users/Kian/Desktop/Kian_Praksa/IGC/databases/results/CPDB/DGE_network/DGE_{c}_multilayer_network_TPM_cutoff_{tpm}.gpickle'.format(tpm = TPM_cutoff, c = cell_type)
 ensurePathExists(path_gpickle)
 nx.write_gpickle(G,path_gpickle)
 print("Exported the .gpickle")
-
-path_edgelist = 'C:/Users/Kian/Desktop/Kian_Praksa/IGC/databases/results/CPDB/DGE_network/02_DGE_{c}_global_network_TPM_cutoff_{tpm}.edgelist'.format(tpm = TPM_cutoff, c = cell_type)
+"""
+path_edgelist = 'C:/Users/Kian/Desktop/Kian_Praksa/IGC/databases/results/CPDB/DGE_network/DGE_{c}_multilayer_network_TPM_cutoff_{tpm}.edgelist'.format(tpm = TPM_cutoff, c = cell_type)
 ensurePathExists(path_gpickle)
 nx.write_edgelist(G, path_edgelist)
 print("Exported the .edgelist")
 
-path_graphml = 'C:/Users/Kian/Desktop/Kian_Praksa/IGC/databases/results/CPDB/Gephi/graphml/02_DGE_{c}_global_network_TPM_cutoff_{tpm}.graphml'.format(tpm = TPM_cutoff, c = cell_type)
+path_graphml = 'C:/Users/Kian/Desktop/Kian_Praksa/IGC/databases/results/CPDB/Gephi/graphml/DGE_{c}_multilayer_network_TPM_cutoff_{tpm}.graphml'.format(tpm = TPM_cutoff, c = cell_type)
 ensurePathExists(path_graphml)
 nx.write_graphml(G, path_graphml)
 print("Exported the .graphml")
-
+"""
 print("Done with exporting")
 end = time.time()
 print("Done, runtime : {:}".format(end-start))

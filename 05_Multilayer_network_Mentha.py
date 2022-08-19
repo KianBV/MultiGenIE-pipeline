@@ -58,6 +58,8 @@ edge_attr = [{k: v for k, v in m.items() if pd.notnull(v)} for m in df_edges.to_
 G.add_edges_from([(i, j, d) for (i, j), d in zip(edge_idx, edge_attr)])
 print(G)
 
+
+#Get all graph nodes
 all_graph_nodes = df_all_nodes.rename(columns = {'layout' : 'organism'})
 
 df_prot_id = df_all_id.loc[df_all_id['Preferred_Name'].isin(all_graph_nodes['node'])]	
@@ -147,17 +149,17 @@ print(G)
 
 print('Exporting the full newtwork')
 #Write in gpickle
-path_gpickle = 'C:/Users/Kian/Desktop/Kian_Praksa/IGC/databases/results/Mentha/Total_network/05_global_network.gpickle'
+path_gpickle = 'C:/Users/Kian/Desktop/Kian_Praksa/IGC/databases/results/Mentha/Total_network/Genome_multilayer_network.gpickle'
 ensurePathExists(path_gpickle)
 nx.write_gpickle(G,path_gpickle)
 print("Exported the .gpickle")
 
-path_edgelist = 'C:/Users/Kian/Desktop/Kian_Praksa/IGC/databases/results/Mentha/Total_network/05_global_network.edgelist'
+path_edgelist = 'C:/Users/Kian/Desktop/Kian_Praksa/IGC/databases/results/Mentha/Total_network/Genome_multilayer_network.edgelist'
 ensurePathExists(path_gpickle)
 nx.write_edgelist(G, path_edgelist)
 print("Exported the .edgelist")
 
-path_graphml = 'C:/Users/Kian/Desktop/Kian_Praksa/IGC/databases/results/Mentha/Gephi/graphml/05_global_network_.graphml'
+path_graphml = 'C:/Users/Kian/Desktop/Kian_Praksa/IGC/databases/results/Mentha/Gephi/graphml/Genome_multilayer_network.graphml'
 ensurePathExists(path_graphml)
 nx.write_graphml(G, path_graphml)
 print("Exported the .graphml")

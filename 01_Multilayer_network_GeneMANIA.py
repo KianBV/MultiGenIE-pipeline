@@ -14,9 +14,7 @@ pd.set_option('display.max_columns', 500)
 pd.set_option('display.width', 1000)
 database = "GeneMANIA"
 #Potential organsims are "Homo_sapiens","Mus_musculus","Drosophila_melanogaster","Rattus_norvegicus","Danio_rerio","Caenorhabditis_elegans"
-
 all_organisms = ["Homo_sapiens","Mus_musculus","Drosophila_melanogaster","Rattus_norvegicus","Danio_rerio","Caenorhabditis_elegans"]
-dge_organisms = ["Homo_sapiens","Mus_musculus","Drosophila_melanogaster"]
 organism_Egg_ids = ['9606', '10090','7227', '10116', '7955', '6239']
 
 
@@ -67,8 +65,6 @@ df_ENS_id = df_id.loc[(df_id["Source"]=="Ensembl Gene ID")].drop_duplicates(subs
 dict_ENS_id = dict(df_ENS_id.loc[:, ["Preferred_Name", "Name"]].values)
 #Make a df to link ENSEMBL Gene ID to all other IDs
 df_id["Preferred_Name"] = df_id["Preferred_Name"].map(dict_ENS_id)
-#Make a df that links ENSEBL Protein and Gene id
-df_prot_id = df_id.loc[(df_id["Source"]=="Ensembl Protein ID")].rename( {"Name":"Protein_id"}, axis = 1)
 print("Done with ID files")
 
 
@@ -79,7 +75,8 @@ print("Add organisms added, starting with cross edges")
 all_graph_nodes = pd.DataFrame(G.nodes(data = 'layer'), columns = ['node', 'organism'])
 
 
-
+#Make a df that links ENSEBL Protein and Gene id
+df_prot_id = df_id.loc[(df_id["Source"]=="Ensembl Protein ID")].rename( {"Name":"Protein_id"}, axis = 1)
 #Combine all of the ID pairs in a single dataframe and keep only those that are in our network
 df_prot_id = df_prot_id.loc[df_prot_id['Preferred_Name'].isin(all_graph_nodes['node'])]	
 #Create the organism, EGGnog id dictionary
@@ -165,10 +162,10 @@ print(G)
 
 print('Exporting the full newtwork')
 #Write in gpickle
-path_gpickle = 'C:/Users/Kian/Desktop/Kian_Praksa/IGC/databases/results/{db}/Total_network/Total_global_network.gpickle'.format(db = database)
+path_gpickle = 'C:/Users/Kian/Desktop/Kian_Praksa/IGC/databases/results/{db}/Total_network/Genome_multilayer_network.gpickle'.format(db = database)
 ensurePathExists(path_gpickle)
 nx.write_gpickle(G,path_gpickle)
-path_edgelist = 'C:/Users/Kian/Desktop/Kian_Praksa/IGC/databases/results/{db}/Total_network/Total_global_network.edgelist'.format(db = database)
+path_edgelist = 'C:/Users/Kian/Desktop/Kian_Praksa/IGC/databases/results/{db}/Total_network/Genome_multilayer_network.edgelist'.format(db = database)
 ensurePathExists(path_gpickle)
 nx.write_edgelist(G, path_edgelist)
 
