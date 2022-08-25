@@ -1,0 +1,25 @@
+cd C:\Users\Kian\Desktop\Kian_Praksa\IGC\Python\Finished\Dorađeno\General_use\Network_makers
+
+python 02_expression_multilayer_network_StringDB.py --expression_path C:\Users\Kian\Desktop\Kian_Praksa\IGC\databases\Raw_data\Test_data\General --output_file C:\Users\Kian\Desktop\Kian_Praksa\IGC\databases\Raw_data\Test_data\General\Expression_multilayer_stringDB
+
+python 04_expression_multilayer_network_GeneMANIA.py --expression_path C:\Users\Kian\Desktop\Kian_Praksa\IGC\databases\Raw_data\Test_data\General --output_file C:\Users\Kian\Desktop\Kian_Praksa\IGC\databases\Raw_data\Test_data\General\Expression_multilayer_GeneMANIA
+
+python 06_expression_multilayer_network_CPDB.py --expression_path C:\Users\Kian\Desktop\Kian_Praksa\IGC\databases\Raw_data\Test_data\General --output_file C:\Users\Kian\Desktop\Kian_Praksa\IGC\databases\Raw_data\Test_data\General\Expression_multilayer_GeneMANIA
+
+python 08_expression_multilayer_network_Mentha.py --expression_path C:\Users\Kian\Desktop\Kian_Praksa\IGC\databases\Raw_data\Test_data\General --output_file C:\Users\Kian\Desktop\Kian_Praksa\IGC\databases\Raw_data\Test_data\General\Expression_multilayer_Mentha
+
+python 10_expression_multilayer_network_IntAct.py --expression_path C:\Users\Kian\Desktop\Kian_Praksa\IGC\databases\Raw_data\Test_data\General --output_file C:\Users\Kian\Desktop\Kian_Praksa\IGC\databases\Raw_data\Test_data\General\Expression_multilayer_IntAct
+
+
+
+cd C:\Users\Kian\Desktop\Kian_Praksa\IGC\Python\Finished\Dorađeno\General_use\Network_analysis
+
+python 01_network_stats.py --input_file C:\Users\Kian\Desktop\Kian_Praksa\IGC\databases\Raw_data\Test_data\General\Expression_multilayer_stringDB.gpickle --output_file C:\Users\Kian\Desktop\Kian_Praksa\IGC\databases\Raw_data\Test_data\General\Nstat.txt
+
+python 02_weight_ranks_calculation.py --input_file C:\Users\Kian\Desktop\Kian_Praksa\IGC\databases\Raw_data\Test_data\General\Expression_multilayer_stringDB.gpickle --output_path C:\Users\Kian\Desktop\Kian_Praksa\IGC\databases\Raw_data\Test_data\General\Nstat.txt
+
+python 02_weight_ranks_calculation.py --input_file C:\Users\Kian\Desktop\Kian_Praksa\IGC\databases\Raw_data\Test_data\General\Expression_multilayer_stringDB.gpickle --output_path C:\Users\Kian\Desktop\Kian_Praksa\IGC\databases\Raw_data\Test_data\General\Nstat.txt
+
+python 03_filtering_single_organism_networks.py --input_file C:\Users\Kian\Desktop\Kian_Praksa\IGC\databases\Raw_data\Test_data\General\Expression_multilayer_stringDB.gpickle --output_path C:\Users\Kian\Desktop\Kian_Praksa\IGC\databases\Raw_data\Test_data\General\Signle_layer --organisms Homo_sapiens Mus_musculus --output_type gpickle
+
+python 04_extract_thresholded_network.py --input_file C:\Users\Kian\Desktop\Kian_Praksa\IGC\databases\Raw_data\Test_data\General\Expression_multilayer_stringDB.gpickle --output_path C:\Users\Kian\Desktop\Kian_Praksa\IGC\databases\Raw_data\Test_data\General\thr  --output_type gpickle
